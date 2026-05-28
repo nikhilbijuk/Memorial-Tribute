@@ -953,7 +953,7 @@ const firebaseConfig = {
 const isFirebaseConfigured = firebaseConfig.apiKey && firebaseConfig.projectId;
 const app = isFirebaseConfigured ? initializeApp(firebaseConfig) : null;
 const db = app ? getFirestore(app) : null;
-const storageBucket = app ? getStorage(app) : null;
+const storageBucket = (app && firebaseConfig.storageBucket && firebaseConfig.storageBucket.trim() !== "") ? getStorage(app) : null;
 
 // Unified storage client mapping Firebase Firestore and Storage with local localStorage fallback
 const storage = {
@@ -997,8 +997,39 @@ const storage = {
       localStorage.setItem(key, JSON.stringify(val));
     } catch {}
   },
-  // Custom helper to upload base64 images directly to Firebase storage bucket
+  // Triple-redundant photo hosting adapter:
+  // 1. Attempts Cloudinary Unsigned Upload (if configured) - 100% Free CDN & No Credit Card
+  // 2. Falls back to Firebase Storage (if enabled/configured)
+  // 3. Returns null to trigger native Firestore base64 document storage fallback (100% Free & No Configuration)
   uploadPhoto: async (base64DataUrl, filename) => {
+    // A. Attempt Cloudinary
+    try {
+      const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "";
+      const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "";
+      
+      if (cloudName && uploadPreset && cloudName.trim() !== "" && uploadPreset.trim() !== "") {
+        const formData = new FormData();
+        formData.append("file", base64DataUrl);
+        formData.append("upload_preset", uploadPreset);
+        
+        const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+          method: "POST",
+          body: formData
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.secure_url) return data.secure_url;
+        } else {
+          const errData = await response.json();
+          console.warn("Cloudinary upload failed, checking next adapter:", errData);
+        }
+      }
+    } catch (err) {
+      console.warn("Cloudinary adapter error, checking next:", err);
+    }
+
+    // B. Fallback to Firebase Storage
     try {
       if (storageBucket) {
         const response = await fetch(base64DataUrl);
@@ -1012,8 +1043,9 @@ const storage = {
         return downloadUrl;
       }
     } catch (err) {
-      console.error("Firebase Storage upload failed, using local base64:", err);
+      console.error("Firebase Storage upload failed, using local/Firestore base64:", err);
     }
+    
     return null;
   }
 };
