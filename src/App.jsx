@@ -1149,13 +1149,31 @@ export default function MemorialAlbum() {
 
     // 2. Load Photos
     if (db) {
-      const q = query(collection(db, "photos"), orderBy("uploadedAt", "desc"));
-      const querySnapshot = await getDocs(q);
-      const loaded = [];
-      querySnapshot.forEach((doc) => {
-        loaded.push({ id: doc.id, ...doc.data() });
-      });
-      setPhotos(loaded);
+      try {
+        const q = query(collection(db, "photos"), orderBy("uploadedAt", "desc"));
+        const querySnapshot = await getDocs(q);
+        const loaded = [];
+        querySnapshot.forEach((doc) => {
+          loaded.push({ id: doc.id, ...doc.data() });
+        });
+        setPhotos(loaded);
+      } catch (err) {
+        console.warn("Firestore photos fetch failed, falling back to local:", err);
+        const photoKeys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith("photo:")) photoKeys.push(k);
+        }
+        const loadedPhotos = [];
+        for (const k of photoKeys) {
+          try {
+            const r = localStorage.getItem(k);
+            if (r) loadedPhotos.push(JSON.parse(r));
+          } catch {}
+        }
+        loadedPhotos.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
+        setPhotos(loadedPhotos);
+      }
     } else {
       const photoKeys = [];
       for (let i = 0; i < localStorage.length; i++) {
@@ -1175,13 +1193,31 @@ export default function MemorialAlbum() {
 
     // 3. Load Tributes
     if (db) {
-      const q = query(collection(db, "tributes"), orderBy("createdAt", "desc"));
-      const querySnapshot = await getDocs(q);
-      const loaded = [];
-      querySnapshot.forEach((doc) => {
-        loaded.push({ id: doc.id, ...doc.data() });
-      });
-      setTributes(loaded);
+      try {
+        const q = query(collection(db, "tributes"), orderBy("createdAt", "desc"));
+        const querySnapshot = await getDocs(q);
+        const loaded = [];
+        querySnapshot.forEach((doc) => {
+          loaded.push({ id: doc.id, ...doc.data() });
+        });
+        setTributes(loaded);
+      } catch (err) {
+        console.warn("Firestore tributes fetch failed, falling back to local:", err);
+        const tributeKeys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith("tribute:")) tributeKeys.push(k);
+        }
+        const loadedTributes = [];
+        for (const k of tributeKeys) {
+          try {
+            const r = localStorage.getItem(k);
+            if (r) loadedTributes.push(JSON.parse(r));
+          } catch {}
+        }
+        loadedTributes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        setTributes(loadedTributes);
+      }
     } else {
       const tributeKeys = [];
       for (let i = 0; i < localStorage.length; i++) {
@@ -1201,13 +1237,31 @@ export default function MemorialAlbum() {
 
     // 4. Load Candles
     if (db) {
-      const q = query(collection(db, "candles"), orderBy("litAt", "desc"));
-      const querySnapshot = await getDocs(q);
-      const loaded = [];
-      querySnapshot.forEach((doc) => {
-        loaded.push({ id: doc.id, ...doc.data() });
-      });
-      setCandles(loaded);
+      try {
+        const q = query(collection(db, "candles"), orderBy("litAt", "desc"));
+        const querySnapshot = await getDocs(q);
+        const loaded = [];
+        querySnapshot.forEach((doc) => {
+          loaded.push({ id: doc.id, ...doc.data() });
+        });
+        setCandles(loaded);
+      } catch (err) {
+        console.warn("Firestore candles fetch failed, falling back to local:", err);
+        const candleKeys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith("candle:")) candleKeys.push(k);
+        }
+        const loadedCandles = [];
+        for (const k of candleKeys) {
+          try {
+            const r = localStorage.getItem(k);
+            if (r) loadedCandles.push(JSON.parse(r));
+          } catch {}
+        }
+        loadedCandles.sort((a, b) => new Date(b.litAt) - new Date(a.litAt));
+        setCandles(loadedCandles);
+      }
     } else {
       const candleKeys = [];
       for (let i = 0; i < localStorage.length; i++) {
