@@ -1098,7 +1098,7 @@ export default function MemorialAlbum() {
   const [tributes, setTributes] = useState([]);
   const [candles, setCandles] = useState([]);
   const [eventInfo, setEventInfo] = useState({
-    name: "Late Shri Ramakrishnan Biju",
+    name: "name",
     title: "First Anniversary Remembrance",
     quote: "Those we love don't go away, they walk beside us every day. Unseen, unheard, but always near, still loved, still missed, and very dear.",
     birthDate: "1942-08-15",
